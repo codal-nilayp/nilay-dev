@@ -82,8 +82,8 @@
                         {%- for property in line_item.properties -%}
                           {% assign property_first_char = property.first | slice: 0 %}
                           {%- if property.last != blank and property_first_char != '_' -%}
+                            <span>{{ property.first }}:</span>
                             <span>
-                              {{ property.first }}:&nbsp;
                               {%- if property.last contains '/uploads/' -%}
                                 <a href="{{ property.last }}">{{ property.last | split: '/' | last }}</a>
                               {%- else -%}
@@ -333,12 +333,12 @@
         {{ order.billing_address | format_address }}
       </div>
       <div>
-        <h2><!--for-hide-shipping-address-begin-->{%- unless order.tags contains 'eGift' -%}{{ 'customer.order.shipping_address' | t }}{%- endunless -%}<!--for-hide-shipping-address-end--></h2>
+        <h2>{{ 'customer.order.shipping_address' | t }}</h2>
         <p>
           <strong>{{ 'customer.order.fulfillment_status' | t }}:</strong>
           {{ order.fulfillment_status_label }}
         </p>
-        <!--for-hide-shipping-address-begin-->{%- unless order.tags contains 'eGift' -%}{{ order.shipping_address | format_address }}{%- endunless -%}<!--for-hide-shipping-address-end-->
+        {{ order.shipping_address | format_address }}
       </div>
     </div>
   </div>
