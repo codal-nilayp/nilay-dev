@@ -22,6 +22,6 @@ jobs:
           # Store URL, like your-store.myshopify.com
           SHOPIFY_FLAG_STORE: 'nilay-dev'
           # Password generated from Theme Access app
-          SHOPIFY_CLI_THEME_TOKEN: ''
+          SHOPIFY_CLI_THEME_TOKEN: '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'
           SHOPIFY_CLI_TTY: 0
         run: shopify theme push --theme 152370676023
