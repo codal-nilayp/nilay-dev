@@ -26,5 +26,6 @@ jobs:
         uses: shopify/theme-check-action@v2
         with:
           theme_root: "."
+          flags: "error"
           base: main
           version: "v3.65.2"
