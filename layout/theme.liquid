@@ -372,6 +372,8 @@
     {%- if settings.cart_type == 'drawer' -%}
       <script src="{{ 'cart-drawer.js' | asset_url }}" defer="defer"></script>
     {%- endif -%}
-    <div class="hide"></div>
+    
+    {% if customer %}
+      <div class="hide"></div>
   </body>
 </html>
