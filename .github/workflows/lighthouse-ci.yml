@@ -1,0 +1,84 @@
+name: Shopify Lighthouse CI
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  get-environment:
+    runs-on: [self-hosted, linux, x64]
+    outputs:
+      environment: ${{ steps.get_environment.outputs.environment }}
+    steps:
+      - id: get_environment
+        name: Get Environment
+        run: |
+
+          target_branch="${{ github.event.pull_request.base.ref }}"
+          echo "Target branch: $target_branch"
+
+            if [[ $target_branch = "develop" ]]
+            then
+              echo "environment=develop" >> $GITHUB_OUTPUT
+            elif [[ $target_branch = "main" ]]
+            then
+              echo "environment=stage" >> $GITHUB_OUTPUT
+            else
+              echo "error: Could not determine environment"
+              exit 1
+            fi
+  deploy:
+    runs-on: [self-hosted, linux, x64]
+    permissions:
+      contents: write
+    needs: ["get-environment"]
+    environment:
+      name: ${{ needs.get-environment.outputs.environment }}
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Grant Permissions on Workspace Directory
+        run: sudo chown -R ubuntu:ubuntu ${{ github.workspace }}
+
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22.2.0"
+
+      - name: Set Environment
+        run: |
+          echo "Environment Name :- ${{ needs.get-environment.outputs.environment }}"
+          echo "ENVIRONMENT_NAME=${{ needs.get-environment.outputs.environment }}" >> $GITHUB_ENV
+      - name: Setup Node.js environment with ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - uses: actions/checkout@v2
+      - name: Lighthouse
+        uses: shopify/lighthouse-ci-action@v1
+        with:
+          access_token: ${{ secrets.SHOP_ACCESS_TOKEN }}
+          store: ${{ secrets.SHOP_STORE }}
+          password: ${{ secrets.SHOP_PASSWORD }}
+          lhci_github_app_token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          product_handle: alkaline-battery-28a-6v-1435632
+          collection_handle: batteries
+          pull_theme: ${{ secrets.PULL_THEME_ID }}
+
+      - name: Slack Notification - Failure
+        if: cancelled() || failure()
+        uses: rtCamp/action-slack-notify@master
+        env:
+          SLACK_USERNAME: Lighthouse CI check - ${{ needs.get-environment.outputs.environment }}
+          SLACK_TITLE: "Lighthouse CI Status"
+          SLACK_MESSAGE: "Failed: ${{ needs.get-environment.outputs.environment }} CI Failed"
+          MSG_MINIMAL: "true"
+          SLACK_ICON_EMOJI: ":rocket:"
+          SLACK_FOOTER: "Driven by lawson-ecommerce GitHub Actions"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: "danger"
