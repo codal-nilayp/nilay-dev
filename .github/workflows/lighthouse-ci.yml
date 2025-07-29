@@ -36,20 +36,6 @@ jobs:
         node-version: [20.x]
 
     steps:
-
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Set Environment
-        run: |
-          echo "Environment Name :- ${{ needs.get-environment.outputs.environment }}"
-          echo "ENVIRONMENT_NAME=${{ needs.get-environment.outputs.environment }}" >> $GITHUB_ENV
-
-      - name: Setup Node.js environment with ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-
       - uses: actions/checkout@v2
       - name: Lighthouse
         uses: shopify/lighthouse-ci-action@v1
@@ -60,4 +46,3 @@ jobs:
           lhci_github_app_token: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
           product_handle:  test-products
           collection_handle: all
-          pull_theme: ${{ secrets.PULL_THEME_ID }}
