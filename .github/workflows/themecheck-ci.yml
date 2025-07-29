@@ -7,14 +7,11 @@ on:
 jobs:
   theme-check:
     name: Shopify Theme Check
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Grant Permissions on Workspace Directory
-        run: sudo chown -R ubuntu:ubuntu ${{ github.workspace }}
-
       - name: Check Out Code
         uses: actions/checkout@v4
 
