@@ -27,5 +27,4 @@ jobs:
         with:
           theme_root: "."
           flags: "error"
-          base: main
           version: "v3.65.2"
