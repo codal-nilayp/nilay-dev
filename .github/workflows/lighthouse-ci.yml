@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize]
 jobs:
   get-environment:
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
     outputs:
       environment: ${{ steps.get_environment.outputs.environment }}
     steps:
@@ -38,8 +38,6 @@ jobs:
         node-version: [20.x]
 
     steps:
-      - name: Grant Permissions on Workspace Directory
-        run: sudo chown -R ubuntu:ubuntu ${{ github.workspace }}
 
       - name: Check out code
         uses: actions/checkout@v4
