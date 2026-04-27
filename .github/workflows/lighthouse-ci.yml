@@ -33,7 +33,7 @@ jobs:
       name: ${{ needs.get-environment.outputs.environment }}
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
 
     steps:
       - uses: actions/checkout@v2
