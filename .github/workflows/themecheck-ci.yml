@@ -1,0 +1,32 @@
+name: CI - Shopify Theme Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  theme-check:
+    name: Shopify Theme Check
+    runs-on: [self-hosted, linux, x64]
+    permissions:
+      contents: write
+
+    steps:
+      - name: Grant Permissions on Workspace Directory
+        run: sudo chown -R ubuntu:ubuntu ${{ github.workspace }}
+
+      - name: Check Out Code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22.2.0"
+
+      - uses: actions/checkout@v4
+      - name: Theme Check
+        uses: shopify/theme-check-action@v2
+        with:
+          theme_root: "."
+          base: main
+          version: "v3.65.2"
