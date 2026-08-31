@@ -119,10 +119,25 @@ jobs:
       - name: generate the version number
         run: |
             ls -al
-            var=$(cat Home.textile | grep PRODUCTION | cut -d":" -f2 )
-            echo $var
-            sed -i -e "s/$var/\ ${{ needs.create_release.outputs.output1 }}/g" Home.textile
-            head -n 11 Home.textile > tmp.txt; mv tmp.txt Home.textile
+            new_version="${{ needs.create_release.outputs.output1 }}"
+            current_version=$(grep PRODUCTION Home.textile | cut -d":" -f2- | tr -d '[:space:]' || true)
+            echo "$current_version"
+
+            if [[ -z "$current_version" ]]; then
+              echo "PRODUCTION: $new_version" > Home.textile
+            else
+              awk -v version="$new_version" 'BEGIN { updated=0 } {
+                if (!updated && $0 ~ /PRODUCTION/) {
+                  sub(/:.*/, ": " version)
+                  updated=1
+                }
+                print
+              }' Home.textile > tmp.txt
+              mv tmp.txt Home.textile
+            fi
+
+            head -n 11 Home.textile > tmp.txt
+            mv tmp.txt Home.textile
             cat Home.textile
 
       - name: Commit files
