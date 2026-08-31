@@ -31,10 +31,16 @@ jobs:
         run: |
             ls -al
 
-            var=$(cat Home.textile | grep PRODUCTION | cut -d":" -f2 )
-            echo "::set-output name=release_name::Production"
-            echo $var
-            echo "::set-output name=tag_version::$(echo ${var})"
+            raw_tag=$(grep PRODUCTION Home.textile | cut -d":" -f2- | tr -d '[:space:]')
+            parsed_tag=$(echo "$raw_tag" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+            if [[ -z "$parsed_tag" ]]; then
+              parsed_tag="0.0.0"
+            fi
+            normalized_tag="v${parsed_tag}"
+
+            echo "release_name=Production" >> "$GITHUB_OUTPUT"
+            echo "$normalized_tag"
+            echo "tag_version=$normalized_tag" >> "$GITHUB_OUTPUT"
 
       - name: get pull-request-label
         id: manual
@@ -52,40 +58,31 @@ jobs:
         shell: bash
         run: |
             echo "${{ steps.manual.outputs.labels }}"
-            # tag=$(git describe --tags --abbrev=0 | sed 's/v//')
-            version="${{ steps.manual.outputs.labels }}"
-            echo "${{ steps.tag.outputs.tag_version }}"
-            tag=$(echo ${{ steps.previous_tag.outputs.tag_version }} | sed 's/v//')
-            IFS='.' read -r -a tag_array <<< "$tag"
+            version_labels="${{ steps.manual.outputs.labels }}"
+            base_tag="${{ steps.previous_tag.outputs.tag_version }}"
+            base_tag="${base_tag#v}"
 
-            if [[ "${version}"  == "minor" ]]
-            then
-              temp=${tag_array[1]}
-              ((temp=temp+1))
-              echo "${temp}"
-              null_value=0
-              newTag="v${tag_array[0]}.${temp}.${null_value}"
-              echo "latest-tag=v${tag_array[0]}.${temp}.${null_value}"  >> $GITHUB_ENV
-              echo "::set-output name=tag_version::$(echo ${newTag})"
-            elif [[ "${version}" == "major" ]]
-            then
-              temp=${tag_array[0]}
-              ((temp=temp+1))
-              echo "${temp}"
-              null_value=0
-              newTag="v${temp}.${null_value}.${null_value}"
-              echo "latest-tag=v${temp}.${null_value}.${null_value}" >> $GITHUB_ENV
-              echo "::set-output name=tag_version::$(echo ${newTag})"
-            else
-              temp=${tag_array[2]}
-              ((temp=temp+1))
-              echo "${temp}"
-              newTag="v${tag_array[0]}.${tag_array[1]}.${temp}"
-
-              echo "latest-tag=v${tag_array[0]}.${tag_array[1]}.${temp}" >> $GITHUB_ENV
-              echo "::set-output name=tag_version::$(echo ${newTag})"
+            if [[ ! "$base_tag" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Invalid base tag format: $base_tag"
+              exit 1
             fi
 
+            IFS='.' read -r major minor patch <<< "$base_tag"
+
+            if [[ "$version_labels" == *"major"* ]]; then
+              major=$((major + 1))
+              minor=0
+              patch=0
+            elif [[ "$version_labels" == *"minor"* ]]; then
+              minor=$((minor + 1))
+              patch=0
+            else
+              patch=$((patch + 1))
+            fi
+
+            newTag="v${major}.${minor}.${patch}"
+            echo "latest-tag=${newTag}" >> "$GITHUB_ENV"
+            echo "tag_version=${newTag}" >> "$GITHUB_OUTPUT"
             echo "New Tag: ${newTag}"
 
   create_release:
