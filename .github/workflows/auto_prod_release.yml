@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   create_tag:
     if: github.event.pull_request.merged == true
@@ -92,18 +96,16 @@ jobs:
       output1: ${{needs.create_tag.outputs.output2}}
     steps:
       - name: Checkout code
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@latest
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-        with:
-          tag_name: ${{needs.create_tag.outputs.output2}}
-          release_name: ${{needs.create_tag.outputs.release_name}}-${{needs.create_tag.outputs.output2}}
-          draft: false
-          prerelease: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ needs.create_tag.outputs.output2 }}" \
+            --title "${{ needs.create_tag.outputs.release_name }}-${{ needs.create_tag.outputs.output2 }}" \
+            --notes "Automated production release"
 
   push-version-wiki:
     if: github.event.pull_request.merged == true
